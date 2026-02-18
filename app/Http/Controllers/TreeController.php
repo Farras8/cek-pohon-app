@@ -84,4 +84,20 @@ class TreeController extends Controller
             'message' => 'All data cleared successfully',
         ]);
     }
+
+    public function deleteSelected(): JsonResponse
+    {
+        $validated = request()->validate([
+            'asset_ids' => 'required|array',
+            'asset_ids.*' => 'string',
+        ]);
+
+        $deleted = \App\Models\Tree::whereIn('asset_id', $validated['asset_ids'])->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "$deleted tree(s) deleted successfully",
+            'deleted_count' => $deleted,
+        ]);
+    }
 }

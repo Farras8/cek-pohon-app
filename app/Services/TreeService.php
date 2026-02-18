@@ -145,6 +145,26 @@ class TreeService
         return $this->mapRowsToTreeData($data);
     }
 
+    private function formatCoordinate($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $str = (string) $value;
+
+        // Already contains dots (e.g. from HTML source) — keep as-is
+        if (str_contains($str, '.')) {
+            return $str;
+        }
+
+        // Raw numeric without dots — re-insert dots every 3 digits from the right
+        // e.g. 39416609 → 39.416.609, 966994526 → 966.994.526
+        $reversed = strrev($str);
+        $chunks = str_split($reversed, 3);
+        return strrev(implode('.', $chunks));
+    }
+
     private function mapRowsToTreeData(Collection $data): Collection
     {
         return $data->filter(function ($row) {
@@ -179,8 +199,8 @@ class TreeService
                 'block_id' => $blockId,
                 'block' => $block,
                 'tree_number' => $parsed ? $parsed['tree_number'] : null,
-                'latitude' => $this->getColumnValue($row, ['latitude', 'lat']),
-                'longitude' => $this->getColumnValue($row, ['longitude', 'lng', 'long']),
+                'latitude' => $this->formatCoordinate($this->getColumnValue($row, ['latitude', 'lat'])),
+                'longitude' => $this->formatCoordinate($this->getColumnValue($row, ['longitude', 'lng', 'long'])),
                 'sended_at' => $this->convertExcelDate($this->getColumnValue($row, ['created_at', 'created at', 'createdat'])),
             ];
         })->filter(fn($item) => $item['tree_number'] !== null);

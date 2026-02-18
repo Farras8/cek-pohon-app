@@ -5,6 +5,7 @@ import TreeLayout from '@/layouts/tree-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import ConfirmModal from '@/components/confirm-modal';
+import MissingTreesChart from '@/components/missing-trees-chart';
 import type { BlockMissingTrees, DuplicateCoordinateGroup } from '@/types';
 import { TreePine, MapPinned, AlertTriangle, Trash2, Upload } from 'lucide-react';
 
@@ -100,6 +101,17 @@ export default function Dashboard({ missingTrees, duplicateCoordinates, totalUpl
                         </CardContent>
                     </Card>
                 </div>
+
+                {hasData && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Missing Trees per Block</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <MissingTreesChart data={missingTrees} />
+                        </CardContent>
+                    </Card>
+                )}
 
                 <div className="grid gap-6 lg:grid-cols-2">
                     <Card>

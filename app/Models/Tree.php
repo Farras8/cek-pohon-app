@@ -30,10 +30,13 @@ class Tree extends Model
         'sended_at',
     ];
 
-    public static function generateAssetId(string $division, string $block, string $treeNumber): string
+    public static function generateAssetId(string $division, string $blockId, string $treeNumber): string
     {
-        $paddedDivision = str_pad($division, 2, '0', STR_PAD_LEFT);
-        return "IPSRES01{$paddedDivision}{$block}{$treeNumber}";
+        $paddedDivision = str_pad((int) $division, 2, '0', STR_PAD_LEFT);
+        $blockPrefix = $paddedDivision === '01' ? 'A' : 'B';
+        $blockNumber = preg_replace('/[^0-9]/', '', $blockId);
+        $paddedBlockNumber = str_pad($blockNumber, 2, '0', STR_PAD_LEFT);
+        return "IPSRES01{$paddedDivision}{$blockPrefix}{$paddedBlockNumber}{$treeNumber}";
     }
 
     public static function parseAssetId(string $assetId): ?array

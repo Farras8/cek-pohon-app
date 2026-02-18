@@ -13,5 +13,6 @@ Route::post('/trees/upload', [TreeController::class, 'upload'])->name('trees.upl
 Route::get('/trees/export', [TreeController::class, 'export'])->name('trees.export');
 Route::get('/trees/export-duplicates', [TreeController::class, 'exportDuplicates'])->name('trees.export-duplicates');
 Route::delete('/trees', [TreeController::class, 'destroy'])->name('trees.destroy');
+Route::post('/trees/delete-selected', [TreeController::class, 'deleteSelected'])->name('trees.delete-selected');
 
 require __DIR__.'/settings.php';

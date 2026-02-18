@@ -1,7 +1,12 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import { BlockMissingTrees } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import DeleteTreesModal from '@/components/delete-trees-modal';
+import ResultModal from '@/components/result-modal';
+import { Trash2 } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -17,6 +22,8 @@ interface TreesTableProps {
 export default function TreesTable({ data }: TreesTableProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedDivision, setSelectedDivision] = useState<string>('all');
+    const [deleteModal, setDeleteModal] = useState<{ open: boolean; block: BlockMissingTrees | null }>({ open: false, block: null });
+    const [resultModal, setResultModal] = useState<{ open: boolean; success: boolean; message: string }>({ open: false, success: false, message: '' });
 
     const blocks = Object.values(data).sort((a, b) => {
         const divCompare = a.division.localeCompare(b.division);
@@ -36,6 +43,31 @@ export default function TreesTable({ data }: TreesTableProps) {
     });
 
     const divisions = Array.from(new Set(blocks.map(b => b.division))).sort();
+
+    const handleDelete = async (assetIds: string[]) => {
+        try {
+            const response = await fetch('/trees/delete-selected', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({ asset_ids: assetIds }),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setDeleteModal({ open: false, block: null });
+                setResultModal({ open: true, success: true, message: result.message });
+                router.reload();
+            } else {
+                setResultModal({ open: true, success: false, message: result.message || 'Failed to delete trees' });
+            }
+        } catch {
+            setResultModal({ open: true, success: false, message: 'An error occurred while deleting trees' });
+        }
+    };
 
     if (blocks.length === 0) {
         return (
@@ -80,9 +112,19 @@ export default function TreesTable({ data }: TreesTableProps) {
                                     Division {block.division}
                                 </Badge>
                             </div>
-                            <Badge variant="destructive">
-                                {block.total} missing
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="destructive">
+                                    {block.total} missing
+                                </Badge>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 text-destructive hover:bg-destructive/10"
+                                    onClick={() => setDeleteModal({ open: true, block })}
+                                >
+                                    <Trash2 className="size-4" />
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="flex flex-wrap gap-2">
@@ -105,6 +147,25 @@ export default function TreesTable({ data }: TreesTableProps) {
                     <p className="text-muted-foreground">No results found for your search.</p>
                 </div>
             )}
+
+            {deleteModal.block && (
+                <DeleteTreesModal
+                    open={deleteModal.open}
+                    onClose={() => setDeleteModal({ open: false, block: null })}
+                    onDelete={handleDelete}
+                    blockName={deleteModal.block.block}
+                    division={deleteModal.block.division}
+                    trees={deleteModal.block.trees}
+                />
+            )}
+
+            <ResultModal
+                open={resultModal.open}
+                onClose={() => setResultModal({ ...resultModal, open: false })}
+                type={resultModal.success ? 'success' : 'error'}
+                title={resultModal.success ? 'Deleted' : 'Error'}
+                message={resultModal.message}
+            />
         </div>
     );
 }
